@@ -1,0 +1,1174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Romantic Love Language Quiz</title>
+
+    <style>
+      :root {
+        --bg: #fff7fb;
+        --card: #ffffff;
+        --primary: #ff4f8b;
+        --secondary: #7c3aed;
+        --text: #2d1238;
+        --muted: #755c7d;
+        --soft: #ffe3ef;
+        --border: #f5bdd3;
+        --shadow: rgba(124, 58, 237, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        background:
+          radial-gradient(circle at top left, #ffe3ef, transparent 35%),
+          radial-gradient(circle at bottom right, #eadcff, transparent 35%),
+          var(--bg);
+        color: var(--text);
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+
+      .app {
+        width: min(800px, 100%);
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        box-shadow: 0 24px 70px var(--shadow);
+        overflow: hidden;
+      }
+
+      header {
+        padding: 32px 28px;
+        text-align: center;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: clamp(2.2rem, 7vw, 4rem);
+        line-height: 1;
+      }
+
+      header p {
+        margin: 12px auto 0;
+        max-width: 600px;
+        color: white;
+        opacity: 1;
+        font-size: 1.05rem;
+      }
+
+      main {
+        padding: 28px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        padding: 24px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .heart {
+        font-size: 2.2rem;
+        animation: pulse 1.2s infinite alternate;
+      }
+
+      @keyframes pulse {
+        to {
+          transform: scale(1.12);
+        }
+      }
+
+      .eyebrow {
+        color: var(--primary);
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 0.78rem;
+      }
+
+      h2 {
+        margin: 10px 0 12px;
+        font-size: clamp(1.6rem, 5vw, 2.4rem);
+      }
+
+      h3 {
+        margin-bottom: 6px;
+      }
+
+      p {
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 14px 20px;
+        font-weight: 800;
+        cursor: pointer;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        box-shadow: 0 10px 24px rgba(255, 79, 139, 0.28);
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.15s ease,
+          background 0.15s ease;
+        font-size: 1rem;
+        appearance: none;
+        -webkit-appearance: none;
+      }
+
+      button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 30px rgba(255, 79, 139, 0.34);
+      }
+
+      button:focus,
+      button:active {
+        outline: none;
+      }
+
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .secondary-btn {
+        background: var(--soft);
+        color: var(--text);
+        box-shadow: none;
+      }
+
+      .answers {
+        display: grid;
+        gap: 14px;
+        margin-top: 22px;
+      }
+
+      .answer {
+        width: 100%;
+        text-align: left;
+        background: #fff;
+        color: var(--text);
+        border: 2px solid var(--border);
+        box-shadow: none;
+        border-radius: 18px;
+        padding: 18px 20px;
+        line-height: 1.4;
+        transform: none;
+      }
+
+      .answer:hover:not(:disabled):not(.selected) {
+        border-color: var(--primary);
+        background: #fff7fb;
+      }
+
+      .answer.selected {
+        border-color: var(--primary);
+        background: #fff0f6;
+        box-shadow: 0 0 0 4px rgba(255, 79, 139, 0.12);
+      }
+
+      .quiz-actions {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .progress-wrap {
+        height: 10px;
+        background: #f4d6e5;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-bottom: 20px;
+      }
+
+      .progress {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        transition: width 0.3s ease;
+      }
+
+      .result-title {
+        font-size: clamp(2rem, 7vw, 4rem);
+        margin: 8px 0;
+        color: var(--primary);
+        line-height: 1;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 22px;
+      }
+
+      .details {
+        margin-top: 20px;
+        background: #fff7fb;
+        border: 1px dashed var(--border);
+        border-radius: 18px;
+        padding: 18px;
+      }
+
+      .score-grid {
+        display: grid;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .score-row {
+        display: grid;
+        grid-template-columns: 160px 1fr 40px;
+        gap: 10px;
+        align-items: center;
+        font-size: 0.95rem;
+      }
+
+      .bar {
+        height: 10px;
+        background: #f4d6e5;
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      .bar span {
+        display: block;
+        height: 100%;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+      }
+
+      .tie-note {
+        margin-top: 14px;
+        padding: 12px 14px;
+        background: var(--soft);
+        border-radius: 14px;
+        color: var(--text);
+        font-weight: 650;
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding: 14px;
+        }
+
+        main {
+          padding: 18px;
+        }
+
+        .card {
+          padding: 20px;
+        }
+
+        .score-row {
+          grid-template-columns: 1fr;
+        }
+
+        .quiz-actions {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="app">
+      <header>
+        <div class="heart">💘</div>
+        <h1>Love Language Quiz</h1>
+        <p>
+          Discover the romantic gestures that make your heart feel most loved.
+        </p>
+      </header>
+
+      <main>
+        <section id="intro" class="card">
+          <div class="eyebrow">Romantic Edition</div>
+          <h2>What makes you feel truly adored?</h2>
+          <p>
+            Choose between two romantic scenarios for each question. At the end,
+            you’ll get your primary love language, what it means, and general
+            compatibility guidance.
+          </p>
+          <button id="startBtn">Start Quiz</button>
+        </section>
+
+        <section id="quiz" class="card hidden">
+          <div class="progress-wrap">
+            <div id="progress" class="progress"></div>
+          </div>
+
+          <div class="eyebrow" id="questionCount"></div>
+          <h2 id="questionText"></h2>
+          <div id="answers" class="answers"></div>
+
+          <div class="quiz-actions">
+            <button id="backBtn" class="secondary-btn" type="button">
+              Back
+            </button>
+          </div>
+        </section>
+
+        <section id="results" class="card hidden">
+          <div class="eyebrow">Your Primary Love Language</div>
+          <h2 id="resultName" class="result-title"></h2>
+          <p id="resultSummary"></p>
+          <div id="tieNote" class="tie-note hidden"></div>
+
+          <div class="actions">
+            <button id="detailsBtn">See Details</button>
+            <button id="restartBtn" class="secondary-btn">Retake Quiz</button>
+          </div>
+
+          <div id="details" class="details hidden">
+            <h3>What this means</h3>
+            <p id="meaning"></p>
+
+            <h3>Romantic compatibility</h3>
+            <p id="compatibility"></p>
+
+            <h3>Your score breakdown</h3>
+            <div id="scoreGrid" class="score-grid"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const loveLanguages = {
+        words: {
+          name: "Words of Affirmation",
+          summary:
+            "You feel loved through heartfelt words, compliments, reassurance, encouragement, and thoughtful messages.",
+          meaning:
+            "You light up when your partner says exactly what they appreciate about you. Sweet texts, sincere compliments, love notes, verbal reassurance, and encouragement make you feel emotionally safe and deeply valued.",
+          compatibility:
+            "You are generally compatible with partners who communicate openly and are willing to be emotionally expressive. If your partner is quieter, compatibility improves when you clearly ask for specific verbal reassurance instead of expecting them to guess.",
+        },
+        time: {
+          name: "Quality Time",
+          summary:
+            "You feel loved when someone gives you their focused, intentional, undistracted attention.",
+          meaning:
+            "For you, love feels like presence. Date nights, deep conversations, shared rituals, phones-away dinners, walks, and cozy evenings together can mean more than grand gestures.",
+          compatibility:
+            "You tend to pair well with people who enjoy shared experiences and intentional connection. Partners with busy schedules can still be compatible when they protect meaningful time and avoid making you feel like an afterthought.",
+        },
+        gifts: {
+          name: "Receiving Gifts",
+          summary:
+            "You feel loved when someone gives you meaningful symbols of affection and remembrance.",
+          meaning:
+            "It is not about price. It is about thoughtfulness. A small item, favorite snack, flower, keepsake, or surprise that says, 'I saw this and thought of you,' can make you feel cherished.",
+          compatibility:
+            "You connect well with thoughtful planners and sentimental partners. Someone does not need to be extravagant to be compatible with you, but they do need to understand that little tokens can carry big emotional meaning.",
+        },
+        service: {
+          name: "Acts of Service",
+          summary:
+            "You feel loved when someone makes your life easier through helpful, dependable actions.",
+          meaning:
+            "You notice effort. Cooking dinner, handling an errand, fixing something, doing a chore, or stepping in before you ask can feel incredibly romantic because it shows care in action.",
+          compatibility:
+            "You pair well with dependable partners who follow through. Compatibility improves when both people are clear about what actually helps, so love does not turn into guessing, scorekeeping, or resentment.",
+        },
+        touch: {
+          name: "Physical Touch",
+          summary:
+            "You feel loved through closeness, affection, cuddling, hand-holding, kisses, and romantic touch.",
+          meaning:
+            "Physical connection helps you feel safe, wanted, and emotionally close. Small touches throughout the day can matter as much as big romantic gestures.",
+          compatibility:
+            "You connect strongly with affectionate partners. With someone less touch-oriented, compatibility depends on open conversations about what types of affection feel comfortable, welcome, and meaningful.",
+        },
+      };
+
+      const questions = [
+        {
+          text: "Which would make you feel more loved?",
+          answers: [
+            { text: "They tell you how much you mean to them.", type: "words" },
+            { text: "They plan an uninterrupted date night.", type: "time" },
+          ],
+        },
+        {
+          text: "Which feels more romantic?",
+          answers: [
+            {
+              text: "They surprise you with a thoughtful little gift.",
+              type: "gifts",
+            },
+            {
+              text: "They take care of something stressful for you.",
+              type: "service",
+            },
+          ],
+        },
+        {
+          text: "Which would make your heart happier?",
+          answers: [
+            {
+              text: "They hold your hand while walking together.",
+              type: "touch",
+            },
+            { text: "They write you a sweet love note.", type: "words" },
+          ],
+        },
+        {
+          text: "After a long day, which would you prefer?",
+          answers: [
+            { text: "They sit with you and really listen.", type: "time" },
+            {
+              text: "They make dinner or clean up without being asked.",
+              type: "service",
+            },
+          ],
+        },
+        {
+          text: "Which feels more meaningful?",
+          answers: [
+            {
+              text: "They bring you something small because it reminded them of you.",
+              type: "gifts",
+            },
+            { text: "They cuddle with you on the couch.", type: "touch" },
+          ],
+        },
+        {
+          text: "Which would make you feel more appreciated?",
+          answers: [
+            { text: "They say, “I’m so lucky to have you.”", type: "words" },
+            {
+              text: "They help you finish a task you were dreading.",
+              type: "service",
+            },
+          ],
+        },
+        {
+          text: "Which date sounds better?",
+          answers: [
+            { text: "A long walk with deep conversation.", type: "time" },
+            { text: "A cozy movie night cuddled together.", type: "touch" },
+          ],
+        },
+        {
+          text: "Which surprise would you love more?",
+          answers: [
+            { text: "A carefully chosen gift.", type: "gifts" },
+            {
+              text: "A heartfelt compliment that feels specific and genuine.",
+              type: "words",
+            },
+          ],
+        },
+        {
+          text: "Which says “I love you” more clearly?",
+          answers: [
+            {
+              text: "They clear their schedule to spend time with you.",
+              type: "time",
+            },
+            {
+              text: "They run an errand so you do not have to.",
+              type: "service",
+            },
+          ],
+        },
+        {
+          text: "Which would you miss most?",
+          answers: [
+            {
+              text: "Frequent hugs, kisses, and physical closeness.",
+              type: "touch",
+            },
+            {
+              text: "Little surprises that show they were thinking of you.",
+              type: "gifts",
+            },
+          ],
+        },
+        {
+          text: "Which feels more romantic in the morning?",
+          answers: [
+            { text: "A sweet good morning text.", type: "words" },
+            { text: "Breakfast together before the day starts.", type: "time" },
+          ],
+        },
+        {
+          text: "Which would make you feel cared for?",
+          answers: [
+            {
+              text: "They fix or organize something for you.",
+              type: "service",
+            },
+            {
+              text: "They wrap their arms around you unexpectedly.",
+              type: "touch",
+            },
+          ],
+        },
+        {
+          text: "Which anniversary gesture would you prefer?",
+          answers: [
+            {
+              text: "A sentimental gift with meaning behind it.",
+              type: "gifts",
+            },
+            { text: "A letter explaining why they love you.", type: "words" },
+          ],
+        },
+        {
+          text: "Which makes you feel closer?",
+          answers: [
+            { text: "A weekend away together.", type: "time" },
+            { text: "Holding each other quietly.", type: "touch" },
+          ],
+        },
+        {
+          text: "Which would impress you more?",
+          answers: [
+            {
+              text: "They remember something you wanted and get it for you.",
+              type: "gifts",
+            },
+            {
+              text: "They handle a responsibility before you ask.",
+              type: "service",
+            },
+          ],
+        },
+        {
+          text: "Which feels more loving during conflict?",
+          answers: [
+            { text: "They reassure you with kind words.", type: "words" },
+            {
+              text: "They make time to talk things through calmly.",
+              type: "time",
+            },
+          ],
+        },
+        {
+          text: "Which small daily gesture matters more?",
+          answers: [
+            { text: "A kiss before leaving.", type: "touch" },
+            {
+              text: "A quick task done to make your day easier.",
+              type: "service",
+            },
+          ],
+        },
+        {
+          text: "Which would make you feel most seen?",
+          answers: [
+            {
+              text: "They notice and compliment something about you.",
+              type: "words",
+            },
+            { text: "They bring you your favorite treat.", type: "gifts" },
+          ],
+        },
+        {
+          text: "Which kind of evening sounds best?",
+          answers: [
+            {
+              text: "Cooking together and laughing in the kitchen.",
+              type: "time",
+            },
+            { text: "They cook for you while you relax.", type: "service" },
+          ],
+        },
+        {
+          text: "Which feels more like love?",
+          answers: [
+            { text: "A meaningful keepsake from them.", type: "gifts" },
+            { text: "Snuggling close at the end of the day.", type: "touch" },
+          ],
+        },
+        {
+          text: "Which would make a regular Tuesday feel special?",
+          answers: [
+            {
+              text: "They send a message saying they cannot stop thinking about you.",
+              type: "words",
+            },
+            {
+              text: "They put their phone away and focus fully on you.",
+              type: "time",
+            },
+          ],
+        },
+        {
+          text: "Which would feel more thoughtful?",
+          answers: [
+            {
+              text: "They pick up something you mentioned liking weeks ago.",
+              type: "gifts",
+            },
+            {
+              text: "They take your car to get gas or handle a small errand.",
+              type: "service",
+            },
+          ],
+        },
+        {
+          text: "Which would make you feel more secure?",
+          answers: [
+            {
+              text: "They say exactly what they love about you.",
+              type: "words",
+            },
+            {
+              text: "They pull you close when you need comfort.",
+              type: "touch",
+            },
+          ],
+        },
+        {
+          text: "Which weekend plan sounds sweeter?",
+          answers: [
+            { text: "A picnic where you talk for hours.", type: "time" },
+            {
+              text: "A relaxing day where they help you catch up on life.",
+              type: "service",
+            },
+          ],
+        },
+        {
+          text: "Which romantic moment would stay with you longer?",
+          answers: [
+            {
+              text: "Receiving a small surprise with a sweet reason behind it.",
+              type: "gifts",
+            },
+            { text: "Dancing slowly together in the kitchen.", type: "touch" },
+          ],
+        },
+        {
+          text: "Which makes an apology feel more sincere?",
+          answers: [
+            {
+              text: "They clearly say what they regret and why you matter.",
+              type: "words",
+            },
+            {
+              text: "They change their behavior and show effort through action.",
+              type: "service",
+            },
+          ],
+        },
+        {
+          text: "Which makes you feel prioritized?",
+          answers: [
+            {
+              text: "They schedule a special night just for you two.",
+              type: "time",
+            },
+            { text: "They hold your hand in public.", type: "touch" },
+          ],
+        },
+        {
+          text: "Which would brighten your day more?",
+          answers: [
+            { text: "A random “I love you” message.", type: "words" },
+            {
+              text: "A small surprise left somewhere for you to find.",
+              type: "gifts",
+            },
+          ],
+        },
+        {
+          text: "Which feels more comforting?",
+          answers: [
+            {
+              text: "They sit beside you and give you undivided attention.",
+              type: "time",
+            },
+            {
+              text: "They step in and take something off your plate.",
+              type: "service",
+            },
+          ],
+        },
+        {
+          text: "Which feels more intimate?",
+          answers: [
+            {
+              text: "A thoughtful item that reminds you of a shared memory.",
+              type: "gifts",
+            },
+            { text: "Falling asleep close together.", type: "touch" },
+          ],
+        },
+        {
+          text: "Which would make you feel more adored on your birthday?",
+          answers: [
+            {
+              text: "A speech or card about what you mean to them.",
+              type: "words",
+            },
+            { text: "A full day planned around being together.", type: "time" },
+          ],
+        },
+        {
+          text: "Which would make you feel more supported?",
+          answers: [
+            {
+              text: "They bring you something comforting when you are stressed.",
+              type: "gifts",
+            },
+            {
+              text: "They help you solve the thing that is stressing you out.",
+              type: "service",
+            },
+          ],
+        },
+        {
+          text: "Which romantic habit would you want most?",
+          answers: [
+            { text: "They compliment you often and genuinely.", type: "words" },
+            {
+              text: "They kiss your forehead or hug you often.",
+              type: "touch",
+            },
+          ],
+        },
+        {
+          text: "Which would make a relationship feel stronger?",
+          answers: [
+            { text: "Regular date nights with no distractions.", type: "time" },
+            {
+              text: "A partner who consistently helps without being reminded.",
+              type: "service",
+            },
+          ],
+        },
+        {
+          text: "Which would feel more personal?",
+          answers: [
+            { text: "A gift tied to an inside joke or memory.", type: "gifts" },
+            { text: "A long, warm hug after time apart.", type: "touch" },
+          ],
+        },
+        {
+          text: "Which would make you feel cherished?",
+          answers: [
+            {
+              text: "They tell other people how proud they are of you.",
+              type: "words",
+            },
+            {
+              text: "They do something practical to make your day smoother.",
+              type: "service",
+            },
+          ],
+        },
+        {
+          text: "Which feels more like romance?",
+          answers: [
+            {
+              text: "A night spent talking, laughing, and reconnecting.",
+              type: "time",
+            },
+            {
+              text: "Holding each other during a quiet moment.",
+              type: "touch",
+            },
+          ],
+        },
+        {
+          text: "Which would you rather receive after a trip?",
+          answers: [
+            {
+              text: "A message saying how much they missed you.",
+              type: "words",
+            },
+            {
+              text: "A little souvenir they picked because it reminded them of you.",
+              type: "gifts",
+            },
+          ],
+        },
+        {
+          text: "Which shows commitment more clearly?",
+          answers: [
+            { text: "They protect time for the relationship.", type: "time" },
+            {
+              text: "They show up reliably when something needs to be done.",
+              type: "service",
+            },
+          ],
+        },
+        {
+          text: "Which makes you feel wanted?",
+          answers: [
+            { text: "They give you a romantic surprise.", type: "gifts" },
+            {
+              text: "They reach for you affectionately throughout the day.",
+              type: "touch",
+            },
+          ],
+        },
+        {
+          text: "Which would mean more after you accomplish something?",
+          answers: [
+            { text: "They tell you they are proud of you.", type: "words" },
+            {
+              text: "They celebrate with a special evening together.",
+              type: "time",
+            },
+          ],
+        },
+        {
+          text: "Which is more attractive in a partner?",
+          answers: [
+            { text: "They notice what you need and help.", type: "service" },
+            { text: "They are naturally affectionate.", type: "touch" },
+          ],
+        },
+        {
+          text: "Which would feel more special on a random day?",
+          answers: [
+            {
+              text: "They bring home flowers, coffee, or your favorite snack.",
+              type: "gifts",
+            },
+            {
+              text: "They say something romantic out of nowhere.",
+              type: "words",
+            },
+          ],
+        },
+        {
+          text: "Which would make you feel emotionally close?",
+          answers: [
+            {
+              text: "Talking for hours about life, dreams, and memories.",
+              type: "time",
+            },
+            {
+              text: "Cuddling quietly without needing to say much.",
+              type: "touch",
+            },
+          ],
+        },
+        {
+          text: "Which would make you feel less alone?",
+          answers: [
+            {
+              text: "They take care of a responsibility with you.",
+              type: "service",
+            },
+            {
+              text: "They give you something meaningful to remind you of them.",
+              type: "gifts",
+            },
+          ],
+        },
+        {
+          text: "Which sounds like the best romantic surprise?",
+          answers: [
+            {
+              text: "A playlist or message full of things they love about you.",
+              type: "words",
+            },
+            {
+              text: "A planned evening where you are fully together.",
+              type: "time",
+            },
+          ],
+        },
+        {
+          text: "Which would matter more during a busy season?",
+          answers: [
+            {
+              text: "They help with tasks so you can breathe.",
+              type: "service",
+            },
+            {
+              text: "They make sure to hug, kiss, and stay physically close.",
+              type: "touch",
+            },
+          ],
+        },
+        {
+          text: "Which would you treasure more?",
+          answers: [
+            { text: "A keepsake from a meaningful moment.", type: "gifts" },
+            { text: "A love letter you can reread.", type: "words" },
+          ],
+        },
+        {
+          text: "Which feels more like being loved well?",
+          answers: [
+            {
+              text: "They give you their full attention when you speak.",
+              type: "time",
+            },
+            {
+              text: "They quietly do something helpful because they know it matters.",
+              type: "service",
+            },
+          ],
+        },
+        {
+          text: "Which would make you smile more at the end of the day?",
+          answers: [
+            { text: "A surprise treat waiting for you.", type: "gifts" },
+            {
+              text: "Being pulled close for a sweet goodnight kiss.",
+              type: "touch",
+            },
+          ],
+        },
+      ];
+
+      let currentQuestion = 0;
+      let advanceTimer = null;
+      const userAnswers = new Array(questions.length).fill(null);
+
+      const intro = document.getElementById("intro");
+      const quiz = document.getElementById("quiz");
+      const results = document.getElementById("results");
+      const startBtn = document.getElementById("startBtn");
+      const restartBtn = document.getElementById("restartBtn");
+      const detailsBtn = document.getElementById("detailsBtn");
+      const details = document.getElementById("details");
+      const backBtn = document.getElementById("backBtn");
+      const answersEl = document.getElementById("answers");
+
+      startBtn.addEventListener("click", startQuiz);
+      restartBtn.addEventListener("click", restartQuiz);
+      backBtn.addEventListener("click", goBack);
+
+      detailsBtn.addEventListener("click", () => {
+        details.classList.toggle("hidden");
+        detailsBtn.textContent = details.classList.contains("hidden")
+          ? "See Details"
+          : "Hide Details";
+      });
+
+      function startQuiz() {
+        intro.classList.add("hidden");
+        quiz.classList.remove("hidden");
+        renderQuestion();
+      }
+
+      function renderQuestion() {
+        clearPendingAdvance();
+
+        const question = questions[currentQuestion];
+        const savedAnswerIndex =
+          userAnswers[currentQuestion]?.answerIndex ?? null;
+        const progressPercent = (currentQuestion / questions.length) * 100;
+
+        document.getElementById("progress").style.width = `${progressPercent}%`;
+        document.getElementById("questionCount").textContent =
+          `Question ${currentQuestion + 1} of ${questions.length}`;
+        document.getElementById("questionText").textContent = question.text;
+
+        backBtn.disabled = currentQuestion === 0;
+
+        answersEl.replaceChildren();
+
+        question.answers.forEach((answer, index) => {
+          const button = document.createElement("button");
+          button.className = "answer";
+          button.type = "button";
+          button.textContent = answer.text;
+
+          if (savedAnswerIndex === index) {
+            button.classList.add("selected");
+          }
+
+          button.addEventListener("click", () =>
+            selectAnswer(answer.type, index, button),
+          );
+
+          answersEl.appendChild(button);
+        });
+      }
+
+      function selectAnswer(type, answerIndex, button) {
+        clearPendingAdvance();
+
+        userAnswers[currentQuestion] = { type, answerIndex };
+
+        const allAnswerButtons = answersEl.querySelectorAll(".answer");
+
+        allAnswerButtons.forEach((btn) => {
+          btn.classList.remove("selected");
+          btn.disabled = true;
+        });
+
+        button.classList.add("selected");
+        button.blur();
+
+        advanceTimer = setTimeout(() => {
+          allAnswerButtons.forEach((btn) => {
+            btn.classList.remove("selected");
+            btn.blur();
+          });
+
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+
+          currentQuestion++;
+
+          if (currentQuestion < questions.length) {
+            renderQuestion();
+          } else {
+            showResults();
+          }
+        }, 220);
+      }
+
+      function goBack() {
+        clearPendingAdvance();
+
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+
+        if (currentQuestion > 0) {
+          currentQuestion--;
+          renderQuestion();
+        }
+      }
+
+      function calculateScores() {
+        const scores = {
+          words: 0,
+          time: 0,
+          gifts: 0,
+          service: 0,
+          touch: 0,
+        };
+
+        userAnswers.forEach((answer) => {
+          if (answer) {
+            scores[answer.type]++;
+          }
+        });
+
+        return scores;
+      }
+
+      function showResults() {
+        clearPendingAdvance();
+
+        quiz.classList.add("hidden");
+        results.classList.remove("hidden");
+
+        document.getElementById("progress").style.width = "100%";
+
+        const scores = calculateScores();
+        const rankedScores = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+        const winningType = rankedScores[0][0];
+        const highestScore = rankedScores[0][1];
+
+        const tiedTypes = rankedScores
+          .filter(([type, score]) => score === highestScore)
+          .map(([type]) => type);
+
+        const result = loveLanguages[winningType];
+
+        document.getElementById("resultName").textContent = result.name;
+        document.getElementById("resultSummary").textContent = result.summary;
+        document.getElementById("meaning").textContent = result.meaning;
+        document.getElementById("compatibility").textContent =
+          result.compatibility;
+
+        const tieNote = document.getElementById("tieNote");
+
+        if (tiedTypes.length > 1) {
+          tieNote.classList.remove("hidden");
+          tieNote.textContent = `You had a tie between ${tiedTypes.map((type) => loveLanguages[type].name).join(" and ")}. We selected ${result.name} as your primary result, but both are important for you.`;
+        } else {
+          tieNote.classList.add("hidden");
+          tieNote.textContent = "";
+        }
+
+        renderScores(scores);
+      }
+
+      function renderScores(scores) {
+        const scoreGrid = document.getElementById("scoreGrid");
+        scoreGrid.innerHTML = "";
+
+        const maxScore = Math.max(...Object.values(scores));
+
+        Object.entries(scores)
+          .sort((a, b) => b[1] - a[1])
+          .forEach(([type, score]) => {
+            const row = document.createElement("div");
+            row.className = "score-row";
+
+            const label = document.createElement("strong");
+            label.textContent = loveLanguages[type].name;
+
+            const bar = document.createElement("div");
+            bar.className = "bar";
+
+            const fill = document.createElement("span");
+            fill.style.width = `${maxScore ? (score / maxScore) * 100 : 0}%`;
+
+            const number = document.createElement("span");
+            number.textContent = score;
+
+            bar.appendChild(fill);
+            row.appendChild(label);
+            row.appendChild(bar);
+            row.appendChild(number);
+
+            scoreGrid.appendChild(row);
+          });
+      }
+
+      function restartQuiz() {
+        clearPendingAdvance();
+
+        currentQuestion = 0;
+        userAnswers.fill(null);
+
+        details.classList.add("hidden");
+        detailsBtn.textContent = "See Details";
+
+        results.classList.add("hidden");
+        intro.classList.remove("hidden");
+
+        answersEl.replaceChildren();
+        document.getElementById("progress").style.width = "0%";
+      }
+
+      function clearPendingAdvance() {
+        if (advanceTimer) {
+          clearTimeout(advanceTimer);
+          advanceTimer = null;
+        }
+      }
+    </script>
+  </body>
+</html>
