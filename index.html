@@ -136,11 +136,9 @@
         font-size: 1rem;
         appearance: none;
         -webkit-appearance: none;
-      }
-
-      button:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 14px 30px rgba(255, 79, 139, 0.34);
+        touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
       }
 
       button:focus,
@@ -178,9 +176,16 @@
         transform: none;
       }
 
-      .answer:hover:not(:disabled):not(.selected) {
-        border-color: var(--primary);
-        background: #fff7fb;
+      @media (hover: hover) and (pointer: fine) {
+        button:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 14px 30px rgba(255, 79, 139, 0.34);
+        }
+
+        .answer:hover:not(:disabled):not(.selected) {
+          border-color: var(--primary);
+          background: #fff7fb;
+        }
       }
 
       .answer.selected {
@@ -312,7 +317,7 @@
             you’ll get your primary love language, what it means, and general
             compatibility guidance.
           </p>
-          <button id="startBtn">Start Quiz</button>
+          <button id="startBtn" type="button">Start Quiz</button>
         </section>
 
         <section id="quiz" class="card hidden">
@@ -338,8 +343,11 @@
           <div id="tieNote" class="tie-note hidden"></div>
 
           <div class="actions">
-            <button id="detailsBtn">See Details</button>
-            <button id="restartBtn" class="secondary-btn">Retake Quiz</button>
+            <button id="detailsBtn" type="button">See Details</button>
+            <button id="shareBtn" type="button">Share Results Card</button>
+            <button id="restartBtn" class="secondary-btn" type="button">
+              Retake Quiz
+            </button>
           </div>
 
           <div id="details" class="details hidden">
@@ -357,6 +365,8 @@
     </div>
 
     <script>
+      const STORAGE_KEY = "romanticLoveLanguageQuizResult";
+
       const loveLanguages = {
         words: {
           name: "Words of Affirmation",
@@ -946,21 +956,27 @@
 
       let currentQuestion = 0;
       let advanceTimer = null;
+      let currentScores = null;
+      let currentPrimaryType = null;
+
       const userAnswers = new Array(questions.length).fill(null);
 
       const intro = document.getElementById("intro");
       const quiz = document.getElementById("quiz");
       const results = document.getElementById("results");
-      const startBtn = document.getElementById("startBtn");
-      const restartBtn = document.getElementById("restartBtn");
-      const detailsBtn = document.getElementById("detailsBtn");
-      const details = document.getElementById("details");
-      const backBtn = document.getElementById("backBtn");
       const answersEl = document.getElementById("answers");
+      const startBtn = document.getElementById("startBtn");
+      const backBtn = document.getElementById("backBtn");
+      const detailsBtn = document.getElementById("detailsBtn");
+      const restartBtn = document.getElementById("restartBtn");
+      const shareBtn = document.getElementById("shareBtn");
+      const details = document.getElementById("details");
 
+      document.addEventListener("DOMContentLoaded", initializeApp);
       startBtn.addEventListener("click", startQuiz);
-      restartBtn.addEventListener("click", restartQuiz);
       backBtn.addEventListener("click", goBack);
+      restartBtn.addEventListener("click", restartQuiz);
+      shareBtn.addEventListener("click", shareResultsCard);
 
       detailsBtn.addEventListener("click", () => {
         details.classList.toggle("hidden");
@@ -969,25 +985,34 @@
           : "Hide Details";
       });
 
+      function initializeApp() {
+        const savedResult = getSavedResult();
+
+        if (savedResult) {
+          showResults(savedResult.scores, true);
+        }
+      }
+
       function startQuiz() {
         intro.classList.add("hidden");
         quiz.classList.remove("hidden");
+        results.classList.add("hidden");
         renderQuestion();
       }
 
       function renderQuestion() {
         clearPendingAdvance();
+        clearMobileTouchState();
 
         const question = questions[currentQuestion];
         const savedAnswerIndex =
           userAnswers[currentQuestion]?.answerIndex ?? null;
-        const progressPercent = (currentQuestion / questions.length) * 100;
 
-        document.getElementById("progress").style.width = `${progressPercent}%`;
+        document.getElementById("progress").style.width =
+          `${(currentQuestion / questions.length) * 100}%`;
         document.getElementById("questionCount").textContent =
           `Question ${currentQuestion + 1} of ${questions.length}`;
         document.getElementById("questionText").textContent = question.text;
-
         backBtn.disabled = currentQuestion === 0;
 
         answersEl.replaceChildren();
@@ -1002,10 +1027,9 @@
             button.classList.add("selected");
           }
 
-          button.addEventListener("click", () =>
+          button.addEventListener("pointerup", () =>
             selectAnswer(answer.type, index, button),
           );
-
           answersEl.appendChild(button);
         });
       }
@@ -1015,42 +1039,40 @@
 
         userAnswers[currentQuestion] = { type, answerIndex };
 
-        const allAnswerButtons = answersEl.querySelectorAll(".answer");
+        const buttons = answersEl.querySelectorAll(".answer");
 
-        allAnswerButtons.forEach((btn) => {
+        buttons.forEach((btn) => {
           btn.classList.remove("selected");
           btn.disabled = true;
         });
 
         button.classList.add("selected");
-        button.blur();
+        clearMobileTouchState();
 
         advanceTimer = setTimeout(() => {
-          allAnswerButtons.forEach((btn) => {
+          buttons.forEach((btn) => {
             btn.classList.remove("selected");
-            btn.blur();
+            btn.disabled = false;
           });
 
-          if (document.activeElement instanceof HTMLElement) {
-            document.activeElement.blur();
-          }
+          answersEl.replaceChildren();
+          clearMobileTouchState();
 
           currentQuestion++;
 
           if (currentQuestion < questions.length) {
-            renderQuestion();
+            requestAnimationFrame(() => renderQuestion());
           } else {
-            showResults();
+            const scores = calculateScores();
+            saveResult(scores);
+            showResults(scores, false);
           }
-        }, 220);
+        }, 180);
       }
 
       function goBack() {
         clearPendingAdvance();
-
-        if (document.activeElement instanceof HTMLElement) {
-          document.activeElement.blur();
-        }
+        clearMobileTouchState();
 
         if (currentQuestion > 0) {
           currentQuestion--;
@@ -1076,18 +1098,20 @@
         return scores;
       }
 
-      function showResults() {
+      function showResults(scores, fromStorage) {
         clearPendingAdvance();
+        clearMobileTouchState();
 
+        intro.classList.add("hidden");
         quiz.classList.add("hidden");
         results.classList.remove("hidden");
 
-        document.getElementById("progress").style.width = "100%";
-
-        const scores = calculateScores();
         const rankedScores = Object.entries(scores).sort((a, b) => b[1] - a[1]);
         const winningType = rankedScores[0][0];
         const highestScore = rankedScores[0][1];
+
+        currentScores = scores;
+        currentPrimaryType = winningType;
 
         const tiedTypes = rankedScores
           .filter(([type, score]) => score === highestScore)
@@ -1096,7 +1120,10 @@
         const result = loveLanguages[winningType];
 
         document.getElementById("resultName").textContent = result.name;
-        document.getElementById("resultSummary").textContent = result.summary;
+        document.getElementById("resultSummary").textContent = fromStorage
+          ? `Welcome back! Your saved result is ${result.summary.charAt(0).toLowerCase()}${result.summary.slice(1)}`
+          : result.summary;
+
         document.getElementById("meaning").textContent = result.meaning;
         document.getElementById("compatibility").textContent =
           result.compatibility;
@@ -1147,20 +1174,295 @@
           });
       }
 
+      function saveResult(scores) {
+        const rankedScores = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+
+        const resultToSave = {
+          scores,
+          primaryType: rankedScores[0][0],
+          completedAt: new Date().toISOString(),
+        };
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(resultToSave));
+      }
+
+      function getSavedResult() {
+        const savedValue = localStorage.getItem(STORAGE_KEY);
+
+        if (!savedValue) {
+          return null;
+        }
+
+        try {
+          const parsed = JSON.parse(savedValue);
+
+          if (!parsed || !parsed.scores || !parsed.primaryType) {
+            localStorage.removeItem(STORAGE_KEY);
+            return null;
+          }
+
+          return parsed;
+        } catch {
+          localStorage.removeItem(STORAGE_KEY);
+          return null;
+        }
+      }
+
       function restartQuiz() {
         clearPendingAdvance();
+        clearMobileTouchState();
+
+        localStorage.removeItem(STORAGE_KEY);
 
         currentQuestion = 0;
+        currentScores = null;
+        currentPrimaryType = null;
         userAnswers.fill(null);
 
         details.classList.add("hidden");
         detailsBtn.textContent = "See Details";
 
         results.classList.add("hidden");
+        quiz.classList.add("hidden");
         intro.classList.remove("hidden");
 
         answersEl.replaceChildren();
         document.getElementById("progress").style.width = "0%";
+      }
+
+      async function shareResultsCard() {
+        if (!currentScores || !currentPrimaryType) {
+          return;
+        }
+
+        const canvas = createResultsCanvas(currentPrimaryType, currentScores);
+        const blob = await new Promise((resolve) =>
+          canvas.toBlob(resolve, "image/png"),
+        );
+
+        if (!blob) {
+          return;
+        }
+
+        const file = new File([blob], "love-language-result.png", {
+          type: "image/png",
+        });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: "My Love Language Result",
+              text: `My primary love language is ${loveLanguages[currentPrimaryType].name}!`,
+              files: [file],
+            });
+            return;
+          } catch {
+            // Fallback to download.
+          }
+        }
+
+        downloadBlob(blob, "love-language-result.png");
+      }
+
+      function createResultsCanvas(primaryType, scores) {
+        const canvas = document.createElement("canvas");
+        const width = 1080;
+        const height = 1550;
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        const primary = loveLanguages[primaryType];
+        const maxScore = Math.max(...Object.values(scores));
+        const totalQuestions = Object.values(scores).reduce(
+          (sum, value) => sum + value,
+          0,
+        );
+
+        const background = ctx.createLinearGradient(0, 0, width, height);
+        background.addColorStop(0, "#fff7fb");
+        background.addColorStop(1, "#eadcff");
+
+        ctx.fillStyle = background;
+        ctx.fillRect(0, 0, width, height);
+
+        drawRoundedRect(ctx, 60, 60, width - 120, height - 120, 48, "#ffffff");
+
+        const headerGradient = ctx.createLinearGradient(
+          60,
+          60,
+          width - 60,
+          360,
+        );
+        headerGradient.addColorStop(0, "#ff4f8b");
+        headerGradient.addColorStop(1, "#7c3aed");
+
+        drawRoundedRect(ctx, 60, 60, width - 120, 300, 48, headerGradient);
+
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "700 48px system-ui, sans-serif";
+        ctx.fillText("💘 Love Language Quiz", width / 2, 155);
+
+        ctx.font = "800 74px system-ui, sans-serif";
+        wrapCanvasText(
+          ctx,
+          primary.name,
+          width / 2,
+          255,
+          width - 180,
+          82,
+          "center",
+        );
+
+        ctx.font = "500 32px system-ui, sans-serif";
+        ctx.fillText(
+          `${totalQuestions} question romantic edition`,
+          width / 2,
+          325,
+        );
+
+        ctx.textAlign = "left";
+        ctx.fillStyle = "#2d1238";
+        ctx.font = "800 42px system-ui, sans-serif";
+        ctx.fillText("My primary love language is:", 110, 460);
+
+        ctx.fillStyle = "#ff4f8b";
+        ctx.font = "900 62px system-ui, sans-serif";
+        wrapCanvasText(ctx, primary.name, 110, 540, width - 220, 72, "left");
+
+        ctx.fillStyle = "#755c7d";
+        ctx.font = "500 31px system-ui, sans-serif";
+        wrapCanvasText(ctx, primary.summary, 110, 670, width - 220, 42, "left");
+
+        ctx.fillStyle = "#2d1238";
+        ctx.font = "800 38px system-ui, sans-serif";
+        ctx.fillText("Score breakdown", 110, 850);
+
+        const sortedScores = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+        let y = 925;
+
+        sortedScores.forEach(([type, score]) => {
+          const label = loveLanguages[type].name;
+          const percentage = maxScore ? score / maxScore : 0;
+
+          ctx.fillStyle = "#2d1238";
+          ctx.font = "700 28px system-ui, sans-serif";
+          ctx.textAlign = "left";
+          ctx.fillText(label, 110, y);
+
+          ctx.fillStyle = "#755c7d";
+          ctx.font = "700 28px system-ui, sans-serif";
+          ctx.textAlign = "right";
+          ctx.fillText(score.toString(), width - 110, y);
+
+          drawRoundedRect(ctx, 110, y + 22, width - 220, 24, 12, "#f4d6e5");
+
+          const barGradient = ctx.createLinearGradient(
+            110,
+            y + 22,
+            width - 110,
+            y + 22,
+          );
+          barGradient.addColorStop(0, "#ff4f8b");
+          barGradient.addColorStop(1, "#7c3aed");
+
+          drawRoundedRect(
+            ctx,
+            110,
+            y + 22,
+            Math.max(24, (width - 220) * percentage),
+            24,
+            12,
+            barGradient,
+          );
+
+          y += 105;
+        });
+
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#755c7d";
+        ctx.font = "600 28px system-ui, sans-serif";
+        ctx.fillText(
+          "Share your result with someone you love 💕",
+          width / 2,
+          height - 125,
+        );
+
+        return canvas;
+      }
+      function drawRoundedRect(ctx, x, y, width, height, radius, fillStyle) {
+        ctx.fillStyle = fillStyle;
+        ctx.beginPath();
+
+        if (ctx.roundRect) {
+          ctx.roundRect(x, y, width, height, radius);
+        } else {
+          ctx.moveTo(x + radius, y);
+          ctx.lineTo(x + width - radius, y);
+          ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+          ctx.lineTo(x + width, y + height - radius);
+          ctx.quadraticCurveTo(
+            x + width,
+            y + height,
+            x + width - radius,
+            y + height,
+          );
+          ctx.lineTo(x + radius, y + height);
+          ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+          ctx.lineTo(x, y + radius);
+          ctx.quadraticCurveTo(x, y, x + radius, y);
+        }
+
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      function wrapCanvasText(
+        ctx,
+        text,
+        x,
+        y,
+        maxWidth,
+        lineHeight,
+        align = "left",
+      ) {
+        const words = text.split(" ");
+        let line = "";
+        const originalAlign = ctx.textAlign;
+
+        ctx.textAlign = align;
+
+        words.forEach((word, index) => {
+          const testLine = line + word + " ";
+          const metrics = ctx.measureText(testLine);
+
+          if (metrics.width > maxWidth && index > 0) {
+            ctx.fillText(line.trim(), x, y);
+            line = word + " ";
+            y += lineHeight;
+          } else {
+            line = testLine;
+          }
+        });
+
+        ctx.fillText(line.trim(), x, y);
+        ctx.textAlign = originalAlign;
+      }
+
+      function downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = filename;
+
+        document.body.appendChild(link);
+        link.click();
+
+        link.remove();
+        URL.revokeObjectURL(url);
       }
 
       function clearPendingAdvance() {
@@ -1168,6 +1470,14 @@
           clearTimeout(advanceTimer);
           advanceTimer = null;
         }
+      }
+
+      function clearMobileTouchState() {
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+
+        document.body.focus?.();
       }
     </script>
   </body>
