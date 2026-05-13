@@ -1253,6 +1253,7 @@
             await navigator.share({
               title: "My Love Language Result",
               text: `My primary love language is ${loveLanguages[currentPrimaryType].name}!`,
+              url: window.location.href,
               files: [file],
             });
             return;
